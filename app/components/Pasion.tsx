@@ -12,7 +12,7 @@ export default function Pasion() {
     : {
         initial: { opacity: 0, y: 32 },
         whileInView: { opacity: 1, y: 0 },
-        viewport: { once: true, amount: 0.3 },
+        viewport: { once: true, amount: 0.1 },
         transition: { duration: 0.7, ease: "easeOut" as const },
       };
 
@@ -21,7 +21,7 @@ export default function Pasion() {
     : {
         initial: { opacity: 0, x: 32 },
         whileInView: { opacity: 1, x: 0 },
-        viewport: { once: true, amount: 0.3 },
+        viewport: { once: true, amount: 0.1 },
         transition: { duration: 0.7, delay: 0.15, ease: "easeOut" as const },
       };
 

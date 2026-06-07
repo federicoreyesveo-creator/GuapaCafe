@@ -52,7 +52,7 @@ export default function Gallery() {
     : {
         initial: { opacity: 0, y: 24 },
         whileInView: { opacity: 1, y: 0 },
-        viewport: { once: true, amount: 0.2 },
+        viewport: { once: true, amount: 0.1 },
         transition: { duration: 0.6, ease: "easeOut" as const },
       };
 
@@ -101,7 +101,7 @@ export default function Gallery() {
                 : {
                     initial: { opacity: 0, y: 20 },
                     whileInView: { opacity: 1, y: 0 },
-                    viewport: { once: true, amount: 0.15 },
+                    viewport: { once: true, amount: 0.1 },
                     transition: { duration: 0.55, delay: i * 0.08, ease: "easeOut" as const },
                   })}
               onMouseEnter={() => setHovered(i)}
