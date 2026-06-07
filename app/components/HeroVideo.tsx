@@ -45,7 +45,8 @@ export default function HeroVideo() {
           start: "top top",
           end: `+=${scrollDist}`,
           pin: true,
-          scrub: 1,
+          scrub: true,
+          anticipatePin: 1,
           onUpdate: (self) => {
             video.currentTime = duration * self.progress;
             // Fade out text as video progresses past 30%

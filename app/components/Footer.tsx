@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 const MAP_EMBED =
   "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3763.437!2d-99.17280!3d19.37200!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x85d1fefef94ef765%3A0x0!2sNicol%C3%A1s+San+Juan+1665%2C+Del+Valle+Sur%2C+Benito+Ju%C3%A1rez%2C+03104+Ciudad+de+M%C3%A9xico%2C+CDMX!5e0!3m2!1ses-419!2smx!4v1749000000000!5m2!1ses-419!2smx";
 
@@ -25,14 +23,17 @@ export default function Footer() {
         <div className="grid md:grid-cols-3 gap-12 md:gap-16">
           {/* Brand */}
           <div>
-            <Image
-              src="/logo.jpeg"
-              alt="Guapa Café"
-              width={100}
-              height={40}
-              className="h-10 w-auto object-contain mb-4"
-              style={{ filter: "brightness(0) invert(1)" }}
-            />
+            <p
+              className="mb-4 font-semibold tracking-widest"
+              style={{
+                fontFamily: "var(--font-be-vietnam)",
+                fontSize: "1.25rem",
+                color: "#ffffff",
+                letterSpacing: "0.18em",
+              }}
+            >
+              GUAPA.
+            </p>
             <p
               style={{
                 fontFamily: "var(--font-be-vietnam)",

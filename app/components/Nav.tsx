@@ -24,10 +24,8 @@ export default function Nav() {
     <header
       className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
       style={{
-        background: scrolled ? "rgba(255,255,255,0.88)" : "transparent",
-        backdropFilter: scrolled ? "blur(12px)" : "none",
-        WebkitBackdropFilter: scrolled ? "blur(12px)" : "none",
-        borderBottom: scrolled ? "1px solid rgba(192,200,197,0.4)" : "none",
+        background: "var(--color-pink)",
+        borderBottom: "1px solid rgba(192,200,197,0.3)",
       }}
     >
       <div className="max-w-7xl mx-auto px-6 md:px-10 h-16 flex items-center justify-between">
@@ -52,7 +50,7 @@ export default function Nav() {
               className="text-sm font-semibold uppercase tracking-widest transition-colors duration-200"
               style={{
                 fontFamily: "var(--font-be-vietnam)",
-                color: scrolled ? "var(--color-text)" : "#ffffff",
+                color: "var(--color-text)",
                 letterSpacing: "0.08em",
               }}
             >
@@ -71,21 +69,21 @@ export default function Nav() {
           <span
             className="block w-6 h-0.5 transition-all duration-300"
             style={{
-              background: scrolled || open ? "var(--color-text)" : "#ffffff",
+              background: "var(--color-text)",
               transform: open ? "rotate(45deg) translate(3px, 3px)" : "none",
             }}
           />
           <span
             className="block w-6 h-0.5 transition-all duration-300"
             style={{
-              background: scrolled || open ? "var(--color-text)" : "#ffffff",
+              background: "var(--color-text)",
               opacity: open ? 0 : 1,
             }}
           />
           <span
             className="block w-6 h-0.5 transition-all duration-300"
             style={{
-              background: scrolled || open ? "var(--color-text)" : "#ffffff",
+              background: "var(--color-text)",
               transform: open ? "rotate(-45deg) translate(3px, -3px)" : "none",
             }}
           />

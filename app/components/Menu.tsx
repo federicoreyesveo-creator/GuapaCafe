@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion, useReducedMotion, AnimatePresence } from "motion/react";
 
 type Badge = "Vegetariano" | "Sin gluten";
 type Item = {
@@ -504,6 +505,7 @@ function CategoryBlock({ category }: { category: Category }) {
 
 export default function Menu() {
   const [activeTab, setActiveTab] = useState(TABS[0].id);
+  const reduce = useReducedMotion();
   const tab = TABS.find((t) => t.id === activeTab)!;
 
   // Split categories into two columns for desktop
@@ -519,7 +521,15 @@ export default function Menu() {
     >
       <div className="max-w-7xl mx-auto px-6 md:px-10">
         {/* Section header */}
-        <div className="text-center mb-12">
+        <motion.div
+          className="text-center mb-12"
+          {...(reduce ? {} : {
+            initial: { opacity: 0, y: 24 },
+            whileInView: { opacity: 1, y: 0 },
+            viewport: { once: true, amount: 0.3 },
+            transition: { duration: 0.6, ease: "easeOut" as const },
+          })}
+        >
           <h2
             style={{
               fontFamily: "var(--font-literata)",
@@ -541,7 +551,7 @@ export default function Menu() {
               borderRadius: "9999px",
             }}
           />
-        </div>
+        </motion.div>
 
         {/* Tabs */}
         <div
@@ -577,15 +587,24 @@ export default function Menu() {
         </div>
 
         {/* Tab panel — 2-col grid on desktop */}
-        <div
-          id={`panel-${tab.id}`}
-          role="tabpanel"
-          aria-label={tab.label}
-          className="grid md:grid-cols-2 gap-0 md:gap-x-16"
-        >
-          <div>{col1.map((cat) => <CategoryBlock key={cat.title} category={cat} />)}</div>
-          <div>{col2.map((cat) => <CategoryBlock key={cat.title} category={cat} />)}</div>
-        </div>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={tab.id}
+            id={`panel-${tab.id}`}
+            role="tabpanel"
+            aria-label={tab.label}
+            className="grid md:grid-cols-2 gap-0 md:gap-x-16"
+            {...(reduce ? {} : {
+              initial: { opacity: 0, y: 12 },
+              animate: { opacity: 1, y: 0 },
+              exit: { opacity: 0, y: -8 },
+              transition: { duration: 0.3, ease: "easeOut" as const },
+            })}
+          >
+            <div>{col1.map((cat) => <CategoryBlock key={cat.title} category={cat} />)}</div>
+            <div>{col2.map((cat) => <CategoryBlock key={cat.title} category={cat} />)}</div>
+          </motion.div>
+        </AnimatePresence>
       </div>
     </section>
   );
