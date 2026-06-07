@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { motion, useReducedMotion } from "motion/react";
+import { useScrollReveal } from "../hooks/useScrollReveal";
 
 const photos = [
   {
@@ -30,7 +30,7 @@ const photos = [
 export default function Gallery() {
   const [hovered, setHovered] = useState<number | null>(null);
   const [lightbox, setLightbox] = useState<number | null>(null);
-  const reduce = useReducedMotion();
+  const header = useScrollReveal(0);
 
   useEffect(() => {
     if (lightbox === null) return;
@@ -47,15 +47,6 @@ export default function Gallery() {
     };
   }, [lightbox]);
 
-  const fadeUp = reduce
-    ? {}
-    : {
-        initial: { opacity: 0, y: 24 },
-        whileInView: { opacity: 1, y: 0 },
-        viewport: { once: true, amount: 0.1 },
-        transition: { duration: 0.6, ease: "easeOut" as const },
-      };
-
   return (
     <section
       id="galeria"
@@ -63,7 +54,11 @@ export default function Gallery() {
       style={{ background: "var(--color-bg)" }}
     >
       <div className="max-w-7xl mx-auto px-6 md:px-10">
-        <motion.div className="text-center mb-12" {...fadeUp}>
+        <div
+          ref={header.ref as React.RefObject<HTMLDivElement>}
+          style={header.style}
+          className="text-center mb-12"
+        >
           <h2
             style={{
               fontFamily: "var(--font-literata)",
@@ -85,25 +80,22 @@ export default function Gallery() {
               borderRadius: "9999px",
             }}
           />
-        </motion.div>
+        </div>
 
         <div
           className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4"
           style={{ gridAutoRows: "280px" }}
         >
           {photos.map((photo, i) => (
-            <motion.div
+            <div
               key={photo.src}
               className="relative overflow-hidden rounded-xl"
-              style={{ gridRow: i === 0 ? "span 2" : "span 1", cursor: "pointer" }}
-              {...(reduce
-                ? {}
-                : {
-                    initial: { opacity: 0, y: 20 },
-                    whileInView: { opacity: 1, y: 0 },
-                    viewport: { once: true, amount: 0.1 },
-                    transition: { duration: 0.55, delay: i * 0.08, ease: "easeOut" as const },
-                  })}
+              style={{
+                gridRow: i === 0 ? "span 2" : "span 1",
+                cursor: "pointer",
+                transform: hovered === i ? "scale(1.02)" : "scale(1)",
+                transition: "transform 0.4s cubic-bezier(0.16,1,0.3,1)",
+              }}
               onMouseEnter={() => setHovered(i)}
               onMouseLeave={() => setHovered(null)}
               onClick={() => setLightbox(i)}
@@ -111,8 +103,6 @@ export default function Gallery() {
               aria-label={`Ver ${photo.alt}`}
               tabIndex={0}
               onKeyDown={(e) => e.key === "Enter" && setLightbox(i)}
-              whileHover={reduce ? {} : { scale: 1.02 }}
-              whileTap={reduce ? {} : { scale: 0.99 }}
             >
               <Image
                 src={photo.src}
@@ -128,7 +118,7 @@ export default function Gallery() {
                   opacity: hovered === i ? 1 : 0,
                 }}
               />
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>

@@ -1,29 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { motion } from "motion/react";
-import { useReducedMotion } from "motion/react";
+import { useScrollReveal } from "../hooks/useScrollReveal";
 
 export default function Pasion() {
-  const reduce = useReducedMotion();
-
-  const fadeUp = reduce
-    ? {}
-    : {
-        initial: { opacity: 0, y: 32 },
-        whileInView: { opacity: 1, y: 0 },
-        viewport: { once: true, amount: 0.1 },
-        transition: { duration: 0.7, ease: "easeOut" as const },
-      };
-
-  const fadeRight = reduce
-    ? {}
-    : {
-        initial: { opacity: 0, x: 32 },
-        whileInView: { opacity: 1, x: 0 },
-        viewport: { once: true, amount: 0.1 },
-        transition: { duration: 0.7, delay: 0.15, ease: "easeOut" as const },
-      };
+  const text  = useScrollReveal(0);
+  const image = useScrollReveal(0.15);
 
   return (
     <section
@@ -34,14 +16,10 @@ export default function Pasion() {
       <div className="max-w-7xl mx-auto px-6 md:px-10">
         <div className="grid md:grid-cols-2 gap-12 md:gap-20 items-center">
           {/* Text */}
-          <motion.div {...fadeUp}>
+          <div ref={text.ref as React.RefObject<HTMLDivElement>} style={text.style}>
             <p
               className="text-xs font-semibold uppercase mb-4"
-              style={{
-                fontFamily: "var(--font-be-vietnam)",
-                color: "var(--color-green-deep)",
-                letterSpacing: "0.18em",
-              }}
+              style={{ fontFamily: "var(--font-be-vietnam)", color: "var(--color-green-deep)", letterSpacing: "0.18em" }}
             >
               Sobre Nosotros
             </p>
@@ -50,11 +28,8 @@ export default function Pasion() {
               style={{
                 fontFamily: "var(--font-literata)",
                 fontSize: "clamp(1.75rem, 3.5vw, 2.5rem)",
-                fontWeight: 600,
-                lineHeight: 1.2,
-                letterSpacing: "-0.01em",
-                color: "var(--color-text)",
-                textWrap: "balance",
+                fontWeight: 600, lineHeight: 1.2, letterSpacing: "-0.01em",
+                color: "var(--color-text)", textWrap: "balance",
               }}
             >
               Nuestra Pasión<br />En Guapa Café
@@ -62,11 +37,8 @@ export default function Pasion() {
             <p
               className="leading-relaxed"
               style={{
-                fontFamily: "var(--font-be-vietnam)",
-                fontSize: "1.0625rem",
-                color: "var(--color-text-muted)",
-                maxWidth: "58ch",
-                lineHeight: 1.75,
+                fontFamily: "var(--font-be-vietnam)", fontSize: "1.0625rem",
+                color: "var(--color-text-muted)", maxWidth: "58ch", lineHeight: 1.75,
               }}
             >
               Creemos en crear un espacio acogedor y amigable para todos. Somos un
@@ -77,32 +49,27 @@ export default function Pasion() {
               nuestros productos cuidadosamente seleccionados reflejan nuestra pasión
               por la calidad y el servicio personalizado.
             </p>
-
             <div className="mt-8 flex flex-wrap gap-3">
-              {["Pet-Friendly", "Ingredientes Frescos", "Ambiente Cálido"].map(
-                (tag) => (
-                  <span
-                    key={tag}
-                    className="px-4 py-1.5 rounded-full text-xs font-semibold"
-                    style={{
-                      fontFamily: "var(--font-be-vietnam)",
-                      background: "var(--color-pink)",
-                      color: "var(--color-text)",
-                      letterSpacing: "0.04em",
-                    }}
-                  >
-                    {tag}
-                  </span>
-                )
-              )}
+              {["Pet-Friendly", "Ingredientes Frescos", "Ambiente Cálido"].map((tag) => (
+                <span
+                  key={tag}
+                  className="px-4 py-1.5 rounded-full text-xs font-semibold"
+                  style={{
+                    fontFamily: "var(--font-be-vietnam)",
+                    background: "var(--color-pink)", color: "var(--color-text)", letterSpacing: "0.04em",
+                  }}
+                >
+                  {tag}
+                </span>
+              ))}
             </div>
-          </motion.div>
+          </div>
 
           {/* Image */}
-          <motion.div
-            {...fadeRight}
+          <div
+            ref={image.ref as React.RefObject<HTMLDivElement>}
+            style={{ ...image.style, aspectRatio: "4/5" }}
             className="relative rounded-2xl overflow-hidden"
-            style={{ aspectRatio: "4/5" }}
           >
             <Image
               src="/images/food-pastries.png"
@@ -111,15 +78,11 @@ export default function Pasion() {
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 50vw"
             />
-            {/* Subtle green tint overlay at bottom */}
             <div
               className="absolute inset-x-0 bottom-0 h-1/3"
-              style={{
-                background:
-                  "linear-gradient(to top, rgba(53,103,93,0.25), transparent)",
-              }}
+              style={{ background: "linear-gradient(to top, rgba(53,103,93,0.25), transparent)" }}
             />
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>

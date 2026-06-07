@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { motion, useReducedMotion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, useReducedMotion } from "motion/react";
+import { useScrollReveal } from "../hooks/useScrollReveal";
 
 type Badge = "Vegetariano" | "Sin gluten";
 type Item = {
@@ -506,6 +507,7 @@ function CategoryBlock({ category }: { category: Category }) {
 export default function Menu() {
   const [activeTab, setActiveTab] = useState(TABS[0].id);
   const reduce = useReducedMotion();
+  const header = useScrollReveal(0);
   const tab = TABS.find((t) => t.id === activeTab)!;
 
   // Split categories into two columns for desktop
@@ -521,14 +523,10 @@ export default function Menu() {
     >
       <div className="max-w-7xl mx-auto px-6 md:px-10">
         {/* Section header */}
-        <motion.div
+        <div
+          ref={header.ref as React.RefObject<HTMLDivElement>}
+          style={header.style}
           className="text-center mb-12"
-          {...(reduce ? {} : {
-            initial: { opacity: 0, y: 24 },
-            whileInView: { opacity: 1, y: 0 },
-            viewport: { once: true, amount: 0.1 },
-            transition: { duration: 0.6, ease: "easeOut" as const },
-          })}
         >
           <h2
             style={{
@@ -551,7 +549,7 @@ export default function Menu() {
               borderRadius: "9999px",
             }}
           />
-        </motion.div>
+        </div>
 
         {/* Tabs */}
         <div

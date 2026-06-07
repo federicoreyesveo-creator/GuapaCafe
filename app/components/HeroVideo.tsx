@@ -10,47 +10,51 @@ gsap.registerPlugin(ScrollTrigger);
 const FRAME_COUNT = 60;
 const MAX_CAPTURE_WIDTH = 1280;
 
-const isDesktop = () =>
-  typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches;
-
 export default function HeroVideo() {
-  const wrapRef   = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const textRef   = useRef<HTMLDivElement>(null);
-  const framesRef = useRef<ImageBitmap[]>([]);
+  const wrapRef    = useRef<HTMLDivElement>(null);
+  const videoRef   = useRef<HTMLVideoElement>(null);
+  const canvasRef  = useRef<HTMLCanvasElement>(null);
+  const textRef    = useRef<HTMLDivElement>(null);
+  const framesRef  = useRef<ImageBitmap[]>([]);
   const [framesReady, setFramesReady] = useState(false);
   const reduce = useReducedMotion();
 
-  // ── Extract frames — only on desktop, checked synchronously ──────────────
+  // Force autoplay — React's autoPlay attr is unreliable on mobile Safari
   useEffect(() => {
-    if (!isDesktop() || reduce) return; // mobile: skip entirely, just show video
+    const v = videoRef.current;
+    if (!v) return;
+    v.play().catch(() => {});
+  }, []);
+
+  // Extract frames on desktop only, checked synchronously
+  useEffect(() => {
+    const desktop = window.matchMedia("(min-width: 768px)").matches;
+    if (!desktop || reduce) return;
 
     let cancelled = false;
-    const video = document.createElement("video");
-    video.src = "/hero-video.mp4";
-    video.muted = true;
-    video.playsInline = true;
-    video.preload = "auto";
+    const vid = document.createElement("video");
+    vid.src = "/hero-video.mp4";
+    vid.muted = true;
+    vid.playsInline = true;
+    vid.preload = "auto";
 
     const extract = async () => {
-      const duration = video.duration;
-      const scale = Math.min(1, MAX_CAPTURE_WIDTH / (video.videoWidth || 1920));
-      const w = Math.round((video.videoWidth  || 1920) * scale);
-      const h = Math.round((video.videoHeight || 1080) * scale);
+      const dur = vid.duration;
+      const scale = Math.min(1, MAX_CAPTURE_WIDTH / (vid.videoWidth || 1920));
+      const w = Math.round((vid.videoWidth || 1920) * scale);
+      const h = Math.round((vid.videoHeight || 1080) * scale);
       const frames: ImageBitmap[] = [];
 
       for (let i = 0; i < FRAME_COUNT; i++) {
         if (cancelled) return;
-        video.currentTime = (i / (FRAME_COUNT - 1)) * duration;
+        vid.currentTime = (i / (FRAME_COUNT - 1)) * dur;
         await new Promise<void>((res) =>
-          video.addEventListener("seeked", () => res(), { once: true })
+          vid.addEventListener("seeked", () => res(), { once: true })
         );
         if (cancelled) return;
         try {
-          frames.push(await createImageBitmap(video, { resizeWidth: w, resizeHeight: h }));
-        } catch {
-          return; // bitmap failed — video fallback stays visible
-        }
+          frames.push(await createImageBitmap(vid, { resizeWidth: w, resizeHeight: h }));
+        } catch { return; }
       }
 
       if (cancelled) return;
@@ -58,42 +62,43 @@ export default function HeroVideo() {
       setFramesReady(true);
     };
 
-    if (video.readyState >= 1) {
-      extract();
-    } else {
-      video.addEventListener("loadedmetadata", extract, { once: true });
-    }
+    vid.readyState >= 1
+      ? extract()
+      : vid.addEventListener("loadedmetadata", extract, { once: true });
 
-    return () => { cancelled = true; video.src = ""; };
+    return () => { cancelled = true; vid.src = ""; };
   }, [reduce]);
 
-  // ── Canvas draw + GSAP pin — only after frames ready, only on desktop ─────
+  // Canvas + GSAP pin — desktop only, after frames ready
   useEffect(() => {
-    if (!framesReady || !isDesktop() || reduce) return;
+    if (!framesReady) return;
+    const desktop = window.matchMedia("(min-width: 768px)").matches;
+    if (!desktop || reduce) return;
+
     const canvas = canvasRef.current;
     const wrap   = wrapRef.current;
-    if (!canvas || !wrap) return;
+    if (!canvas || !wrap || !framesRef.current.length) return;
 
     const frames = framesRef.current;
-    if (!frames.length) return;
+    let idx = 0;
 
-    let currentIdx = 0;
-
-    const draw = (index: number) => {
-      currentIdx = index;
+    const draw = (i: number) => {
+      idx = i;
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
-      const frame = frames[Math.min(index, frames.length - 1)];
-      const sw = frame.width,  sh = frame.height;
-      const dw = canvas.width, dh = canvas.height;
-      const sc = Math.max(dw / sw, dh / sh);
-      ctx.drawImage(frame, (dw - sw * sc) / 2, (dh - sh * sc) / 2, sw * sc, sh * sc);
+      const f = frames[Math.min(i, frames.length - 1)];
+      const sc = Math.max(canvas.width / f.width, canvas.height / f.height);
+      ctx.drawImage(f,
+        (canvas.width  - f.width  * sc) / 2,
+        (canvas.height - f.height * sc) / 2,
+        f.width * sc, f.height * sc
+      );
     };
 
     const resize = () => {
       canvas.width  = window.innerWidth;
       canvas.height = window.innerHeight;
-      draw(currentIdx);
+      draw(idx);
     };
 
     resize();
@@ -108,9 +113,8 @@ export default function HeroVideo() {
         anticipatePin: 1,
         onUpdate: (self) => {
           draw(Math.floor(self.progress * (FRAME_COUNT - 1)));
-          if (textRef.current) {
+          if (textRef.current)
             textRef.current.style.opacity = String(Math.max(0, 1 - self.progress * 4));
-          }
         },
       });
     }, wrap);
@@ -120,16 +124,16 @@ export default function HeroVideo() {
 
   return (
     <div ref={wrapRef} className="relative" style={{ minHeight: "100dvh" }}>
-
-      {/* ── Video: always present as base layer (mobile) + desktop fallback ── */}
+      {/* Video — always present; mobile uses this directly */}
       <video
+        ref={videoRef}
         src="/hero-video.mp4"
         autoPlay muted playsInline loop
         className="absolute inset-0 w-full h-full object-cover"
         aria-hidden="true"
       />
 
-      {/* ── Canvas: covers video on desktop once frames are ready ─────────── */}
+      {/* Canvas — desktop only, covers video once frames are ready */}
       <canvas
         ref={canvasRef}
         className="absolute inset-0 hidden md:block"
@@ -137,7 +141,7 @@ export default function HeroVideo() {
         aria-hidden="true"
       />
 
-      {/* Dark scrim */}
+      {/* Scrim */}
       <div
         className="absolute inset-0"
         style={{
@@ -146,7 +150,7 @@ export default function HeroVideo() {
         }}
       />
 
-      {/* Hero text */}
+      {/* Text */}
       <div
         ref={textRef}
         className="relative z-10 flex flex-col items-center justify-center"
@@ -155,11 +159,7 @@ export default function HeroVideo() {
         <div className="text-center px-6 max-w-4xl mx-auto">
           <p
             className="text-sm font-semibold uppercase mb-6"
-            style={{
-              fontFamily: "var(--font-be-vietnam)",
-              color: "var(--color-green)",
-              letterSpacing: "0.18em",
-            }}
+            style={{ fontFamily: "var(--font-be-vietnam)", color: "var(--color-green)", letterSpacing: "0.18em" }}
           >
             Colonia del Valle · CDMX
           </p>
@@ -168,9 +168,7 @@ export default function HeroVideo() {
             style={{
               fontFamily: "var(--font-literata)",
               fontSize: "clamp(2.5rem, 7vw, 5.5rem)",
-              fontWeight: 600,
-              lineHeight: 1.1,
-              letterSpacing: "-0.02em",
+              fontWeight: 600, lineHeight: 1.1, letterSpacing: "-0.02em",
               textWrap: "balance",
             }}
           >
@@ -178,51 +176,23 @@ export default function HeroVideo() {
           </h1>
           <p
             className="text-white/90 font-semibold uppercase"
-            style={{
-              fontFamily: "var(--font-be-vietnam)",
-              fontSize: "clamp(0.7rem, 1.5vw, 0.875rem)",
-              letterSpacing: "0.22em",
-            }}
+            style={{ fontFamily: "var(--font-be-vietnam)", fontSize: "clamp(0.7rem,1.5vw,0.875rem)", letterSpacing: "0.22em" }}
           >
             Deléitate con nuestras creaciones
           </p>
           <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-            <a
-              href="#menu"
+            <a href="#menu"
               className="inline-flex items-center justify-center px-8 py-3 rounded-lg font-semibold text-white transition-all duration-200 active:scale-[0.98]"
-              style={{
-                fontFamily: "var(--font-be-vietnam)",
-                fontSize: "0.875rem",
-                background: "var(--color-green-deep)",
-                minHeight: "44px",
-              }}
-            >
-              Ver Menú
-            </a>
-            <a
-              href="#nosotros"
+              style={{ fontFamily: "var(--font-be-vietnam)", fontSize: "0.875rem", background: "var(--color-green-deep)", minHeight: "44px" }}
+            >Ver Menú</a>
+            <a href="#nosotros"
               className="inline-flex items-center justify-center px-8 py-3 rounded-lg font-semibold transition-all duration-200 active:scale-[0.98]"
-              style={{
-                fontFamily: "var(--font-be-vietnam)",
-                fontSize: "0.875rem",
-                border: "1px solid rgba(255,255,255,0.6)",
-                color: "#ffffff",
-                minHeight: "44px",
-              }}
-            >
-              Nuestra Historia
-            </a>
+              style={{ fontFamily: "var(--font-be-vietnam)", fontSize: "0.875rem", border: "1px solid rgba(255,255,255,0.6)", color: "#ffffff", minHeight: "44px" }}
+            >Nuestra Historia</a>
           </div>
         </div>
-        <div
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
-          aria-hidden="true"
-          style={{ opacity: 0.7 }}
-        >
-          <div
-            className="w-px h-12 mx-auto"
-            style={{ background: "linear-gradient(to bottom,rgba(255,255,255,0.8),transparent)" }}
-          />
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2" aria-hidden="true" style={{ opacity: 0.7 }}>
+          <div className="w-px h-12 mx-auto" style={{ background: "linear-gradient(to bottom,rgba(255,255,255,0.8),transparent)" }} />
         </div>
       </div>
     </div>
