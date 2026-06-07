@@ -18,26 +18,17 @@ export default function HeroVideo() {
     const wrap = wrapRef.current;
     if (!video || !wrap) return;
 
+    // Play the video naturally — no frame scrubbing (MP4/H.264 doesn't support
+    // smooth random-access seeking; native playback is always buttery smooth)
+    video.play().catch(() => {});
+
     if (reduce) return;
 
-    // Force browser to decode frames so seeking works
-    const forceLoad = () => {
-      video.play().then(() => {
-        video.pause();
-        video.currentTime = 0;
-      }).catch(() => {});
-    };
-
-    if (video.readyState >= 3) {
-      forceLoad();
-    } else {
-      video.addEventListener("canplay", forceLoad, { once: true });
-    }
-
     const ctx = gsap.context(() => {
-      // Wait for video metadata to know duration
       const setup = () => {
         const duration = video.duration || 10;
+        // Pin the section for the full duration of the video
+        // 200px per second keeps the pin long enough to watch the whole clip
         const scrollDist = Math.floor(duration * 200);
 
         ScrollTrigger.create({
@@ -45,11 +36,9 @@ export default function HeroVideo() {
           start: "top top",
           end: `+=${scrollDist}`,
           pin: true,
-          scrub: true,
           anticipatePin: 1,
           onUpdate: (self) => {
-            video.currentTime = duration * self.progress;
-            // Fade out text as video progresses past 30%
+            // Text fades out after 30% scroll progress — video keeps playing
             if (textRef.current) {
               const opacity = Math.max(0, 1 - self.progress * 3);
               textRef.current.style.opacity = String(opacity);
@@ -70,13 +59,14 @@ export default function HeroVideo() {
 
   return (
     <div ref={wrapRef} className="relative" style={{ minHeight: "100dvh" }}>
-      {/* Video */}
+      {/* Video plays naturally — autoplay muted */}
       <video
         ref={videoRef}
         src="/hero-video.mp4"
         preload="auto"
         muted
         playsInline
+        loop
         className="absolute inset-0 w-full h-full object-cover"
         aria-hidden="true"
       />
@@ -160,7 +150,7 @@ export default function HeroVideo() {
           </div>
         </div>
 
-        {/* Scroll indicator — purely decorative, no label per skill rules */}
+        {/* Scroll indicator */}
         <div
           className="absolute bottom-8 left-1/2 -translate-x-1/2"
           aria-hidden="true"
