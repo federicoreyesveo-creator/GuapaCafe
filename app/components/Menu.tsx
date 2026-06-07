@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence, useReducedMotion } from "motion/react";
-import { useScrollReveal } from "../hooks/useScrollReveal";
 
 type Badge = "Vegetariano" | "Sin gluten";
 type Item = {
@@ -506,8 +504,6 @@ function CategoryBlock({ category }: { category: Category }) {
 
 export default function Menu() {
   const [activeTab, setActiveTab] = useState(TABS[0].id);
-  const reduce = useReducedMotion();
-  const header = useScrollReveal(0);
   const tab = TABS.find((t) => t.id === activeTab)!;
 
   // Split categories into two columns for desktop
@@ -523,11 +519,7 @@ export default function Menu() {
     >
       <div className="max-w-7xl mx-auto px-6 md:px-10">
         {/* Section header */}
-        <div
-          ref={header.ref as React.RefObject<HTMLDivElement>}
-          style={header.style}
-          className="text-center mb-12"
-        >
+        <div className="text-center mb-12">
           <h2
             style={{
               fontFamily: "var(--font-literata)",
@@ -585,24 +577,15 @@ export default function Menu() {
         </div>
 
         {/* Tab panel — 2-col grid on desktop */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={tab.id}
-            id={`panel-${tab.id}`}
-            role="tabpanel"
-            aria-label={tab.label}
-            className="grid md:grid-cols-2 gap-0 md:gap-x-16"
-            {...(reduce ? {} : {
-              initial: { opacity: 0, y: 12 },
-              animate: { opacity: 1, y: 0 },
-              exit: { opacity: 0, y: -8 },
-              transition: { duration: 0.3, ease: "easeOut" as const },
-            })}
-          >
-            <div>{col1.map((cat) => <CategoryBlock key={cat.title} category={cat} />)}</div>
-            <div>{col2.map((cat) => <CategoryBlock key={cat.title} category={cat} />)}</div>
-          </motion.div>
-        </AnimatePresence>
+        <div
+          id={`panel-${tab.id}`}
+          role="tabpanel"
+          aria-label={tab.label}
+          className="grid md:grid-cols-2 gap-0 md:gap-x-16"
+        >
+          <div>{col1.map((cat) => <CategoryBlock key={cat.title} category={cat} />)}</div>
+          <div>{col2.map((cat) => <CategoryBlock key={cat.title} category={cat} />)}</div>
+        </div>
       </div>
     </section>
   );
