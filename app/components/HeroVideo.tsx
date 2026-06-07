@@ -1,82 +1,175 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "motion/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
+const FRAME_COUNT = 120; // frames extracted from the video
+
 export default function HeroVideo() {
   const wrapRef = useRef<HTMLDivElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
+  const framesRef = useRef<ImageBitmap[]>([]);
+  const [ready, setReady] = useState(false);
   const reduce = useReducedMotion();
 
+  // ── Step 1: extract FRAME_COUNT frames from the video into ImageBitmaps ──
   useEffect(() => {
-    const video = videoRef.current;
-    const wrap = wrapRef.current;
-    if (!video || !wrap) return;
+    if (reduce) { setReady(true); return; }
 
-    // Play the video naturally — no frame scrubbing (MP4/H.264 doesn't support
-    // smooth random-access seeking; native playback is always buttery smooth)
-    video.play().catch(() => {});
+    const video = document.createElement("video");
+    video.src = "/hero-video.mp4";
+    video.muted = true;
+    video.playsInline = true;
+    video.preload = "auto";
+
+    const extract = async () => {
+      const duration = video.duration;
+      const frames: ImageBitmap[] = [];
+
+      for (let i = 0; i < FRAME_COUNT; i++) {
+        video.currentTime = (i / (FRAME_COUNT - 1)) * duration;
+        await new Promise<void>((resolve) => {
+          video.addEventListener("seeked", () => resolve(), { once: true });
+        });
+        const bitmap = await createImageBitmap(video);
+        frames.push(bitmap);
+      }
+
+      framesRef.current = frames;
+      setReady(true);
+    };
+
+    const onMeta = () => extract();
+
+    if (video.readyState >= 1) {
+      extract();
+    } else {
+      video.addEventListener("loadedmetadata", onMeta, { once: true });
+    }
+
+    return () => {
+      video.removeEventListener("loadedmetadata", onMeta);
+      video.src = "";
+    };
+  }, [reduce]);
+
+  // ── Step 2: once frames are ready, paint frame 0 and set up ScrollTrigger ──
+  useEffect(() => {
+    if (!ready) return;
+    const canvas = canvasRef.current;
+    const wrap = wrapRef.current;
+    if (!canvas || !wrap) return;
+
+    const frames = framesRef.current;
+
+    // Size canvas to fill the viewport (like object-fit: cover)
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      drawCurrentFrame();
+    };
+
+    let currentIdx = 0;
+
+    // object-fit: cover math — scale to fill, crop to center
+    const draw = (index: number) => {
+      if (!frames.length) return;
+      currentIdx = index;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      const frame = frames[Math.min(index, frames.length - 1)];
+      const sw = frame.width;
+      const sh = frame.height;
+      const dw = canvas.width;
+      const dh = canvas.height;
+      const scale = Math.max(dw / sw, dh / sh);
+      const x = (dw - sw * scale) / 2;
+      const y = (dh - sh * scale) / 2;
+      ctx.drawImage(frame, x, y, sw * scale, sh * scale);
+    };
+
+    const drawCurrentFrame = () => draw(currentIdx);
+
+    if (frames.length) {
+      resize();
+    }
+
+    window.addEventListener("resize", resize);
 
     if (reduce) return;
 
+    const scrollDist = window.innerHeight * 6; // pin for ~6 viewport heights
+
     const ctx = gsap.context(() => {
-      const setup = () => {
-        const duration = video.duration || 10;
-        // Pin the section for the full duration of the video
-        // 200px per second keeps the pin long enough to watch the whole clip
-        const scrollDist = Math.floor(duration * 200);
+      ScrollTrigger.create({
+        trigger: wrap,
+        start: "top top",
+        end: `+=${scrollDist}`,
+        pin: true,
+        anticipatePin: 1,
+        onUpdate: (self) => {
+          // Draw frame tied to scroll progress — instant, no codec
+          const idx = Math.floor(self.progress * (FRAME_COUNT - 1));
+          draw(idx);
 
-        ScrollTrigger.create({
-          trigger: wrap,
-          start: "top top",
-          end: `+=${scrollDist}`,
-          pin: true,
-          anticipatePin: 1,
-          onUpdate: (self) => {
-            // Text fades out after 30% scroll progress — video keeps playing
-            if (textRef.current) {
-              const opacity = Math.max(0, 1 - self.progress * 3);
-              textRef.current.style.opacity = String(opacity);
-            }
-          },
-        });
-      };
-
-      if (video.readyState >= 1) {
-        setup();
-      } else {
-        video.addEventListener("loadedmetadata", setup, { once: true });
-      }
+          // Fade text overlay out after 25% scroll
+          if (textRef.current) {
+            const opacity = Math.max(0, 1 - self.progress * 4);
+            textRef.current.style.opacity = String(opacity);
+          }
+        },
+      });
     }, wrap);
 
-    return () => ctx.revert();
-  }, [reduce]);
+    return () => {
+      ctx.revert();
+      window.removeEventListener("resize", resize);
+    };
+  }, [ready, reduce]);
 
   return (
     <div ref={wrapRef} className="relative" style={{ minHeight: "100dvh" }}>
-      {/* Video plays naturally — autoplay muted */}
-      <video
-        ref={videoRef}
-        src="/hero-video.mp4"
-        preload="auto"
-        muted
-        playsInline
-        loop
-        className="absolute inset-0 w-full h-full object-cover"
+      {/* Canvas — frames painted here during scroll */}
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0"
+        style={{ display: "block", width: "100%", height: "100%" }}
         aria-hidden="true"
       />
+
+      {/* Fallback video for reduced-motion / while frames load */}
+      {(!ready || reduce) && (
+        <video
+          src="/hero-video.mp4"
+          autoPlay
+          muted
+          playsInline
+          loop
+          className="absolute inset-0 w-full h-full object-cover"
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Loading shimmer while extracting frames */}
+      {!ready && (
+        <div
+          className="absolute inset-0"
+          style={{ background: "rgba(0,0,0,0.6)" }}
+          aria-hidden="true"
+        />
+      )}
 
       {/* Dark scrim for text legibility */}
       <div
         className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.5) 100%)",
+            "linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.15) 50%, rgba(0,0,0,0.5) 100%)",
         }}
       />
 
