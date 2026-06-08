@@ -182,7 +182,6 @@ export default function HeroVideo() {
         preload="auto"
         className="absolute inset-0 w-full h-full object-cover"
         aria-hidden="true"
-        // @ts-expect-error webkit attr needed for older iOS
         webkit-playsinline="true"
         x-webkit-airplay="deny"
       />
