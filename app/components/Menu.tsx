@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 
 type Badge = "Vegetariano" | "Sin gluten";
 type Item = {
@@ -504,16 +504,7 @@ function CategoryBlock({ category }: { category: Category }) {
 
 export default function Menu() {
   const [activeTab, setActiveTab] = useState(TABS[0].id);
-  const panelRef = useRef<HTMLDivElement>(null);
-  const tab = TABS.find((t) => t.id === activeTab)!
-
-  const switchTab = (id: string) => {
-    setActiveTab(id);
-    // On mobile, scroll panel into view so user sees the content change
-    setTimeout(() => {
-      panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 50);
-  };
+  const tab = TABS.find((t) => t.id === activeTab)!;
 
   // Split categories into two columns for desktop
   const half = Math.ceil(tab.categories.length / 2);
@@ -528,7 +519,7 @@ export default function Menu() {
     >
       <div className="max-w-7xl mx-auto px-6 md:px-10">
         {/* Section header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-10">
           <h2
             style={{
               fontFamily: "var(--font-literata)",
@@ -552,11 +543,22 @@ export default function Menu() {
           />
         </div>
 
-        {/* Tabs */}
+        {/* Tabs — sticky so they stay visible while scrolling menu content */}
         <div
-          className="flex flex-wrap gap-2 mb-10"
+          className="flex flex-wrap gap-2 mb-8 py-3"
           role="tablist"
           aria-label="Secciones del menú"
+          style={{
+            position: "sticky",
+            top: "64px", // below the nav
+            zIndex: 10,
+            background: "var(--color-surface)",
+            borderBottom: "1px solid var(--color-outline)",
+            marginLeft: "-1.5rem",
+            marginRight: "-1.5rem",
+            paddingLeft: "1.5rem",
+            paddingRight: "1.5rem",
+          }}
         >
           {TABS.map((t) => (
             <button
@@ -564,7 +566,7 @@ export default function Menu() {
               role="tab"
               aria-selected={activeTab === t.id}
               aria-controls={`panel-${t.id}`}
-              onClick={() => switchTab(t.id)}
+              onClick={() => setActiveTab(t.id)}
               className="shrink-0 px-5 py-2.5 rounded-lg font-semibold transition-all duration-200"
               style={{
                 fontFamily: "var(--font-be-vietnam)",
@@ -586,11 +588,10 @@ export default function Menu() {
 
         {/* Tab panel — 2-col grid on desktop */}
         <div
-          ref={panelRef}
           id={`panel-${tab.id}`}
           role="tabpanel"
           aria-label={tab.label}
-          className="grid md:grid-cols-2 gap-0 md:gap-x-16"
+          className="grid md:grid-cols-2 gap-0 md:gap-x-16 pt-6"
         >
           <div>{col1.map((cat) => <CategoryBlock key={cat.title} category={cat} />)}</div>
           <div>{col2.map((cat) => <CategoryBlock key={cat.title} category={cat} />)}</div>
