@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 
 const links = [
   { label: "Nosotros", href: "#nosotros" },
@@ -11,47 +11,70 @@ const links = [
 ];
 
 export default function Nav() {
-  const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
+  // Close drawer on scroll (UX improvement)
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
+    const onScroll = () => { if (open) setOpen(false); };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [open]);
+
+  const toggle = () => setOpen((v) => !v);
 
   return (
     <header
-      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
       style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 50,
         background: "var(--color-pink)",
         borderBottom: "1px solid rgba(192,200,197,0.3)",
       }}
     >
-      <div className="max-w-7xl mx-auto px-6 md:px-10 h-16 flex items-center justify-between">
+      <div
+        style={{
+          maxWidth: "1280px",
+          margin: "0 auto",
+          padding: "0 1.5rem",
+          height: "64px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
         {/* Logo */}
-        <a href="#" className="flex items-center" aria-label="Guapa Café inicio">
+        <a href="#" aria-label="Guapa Café inicio" style={{ display: "flex", alignItems: "center" }}>
           <Image
             src="/logo.jpeg"
             alt="Guapa Café"
             width={100}
             height={40}
-            className="h-10 w-auto object-contain"
+            style={{ height: "40px", width: "auto", objectFit: "contain" }}
             priority
           />
         </a>
 
-        {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-8" aria-label="Navegación principal">
+        {/* Desktop nav — hidden on mobile */}
+        <nav
+          className="hidden md:flex"
+          style={{ alignItems: "center", gap: "2rem" }}
+          aria-label="Navegación principal"
+        >
           {links.map((l) => (
             <a
               key={l.href}
               href={l.href}
-              className="text-sm font-semibold uppercase tracking-widest transition-colors duration-200"
               style={{
                 fontFamily: "var(--font-be-vietnam)",
-                color: "var(--color-text)",
+                fontSize: "0.875rem",
+                fontWeight: 600,
+                textTransform: "uppercase",
                 letterSpacing: "0.08em",
+                color: "var(--color-text)",
+                textDecoration: "none",
               }}
             >
               {l.label}
@@ -59,58 +82,76 @@ export default function Nav() {
           ))}
         </nav>
 
-        {/* Mobile hamburger */}
+        {/* Hamburger — mobile only */}
         <button
-          className="md:hidden flex flex-col gap-1.5 p-2 rounded-md"
-          onClick={() => setOpen(!open)}
+          className="md:hidden"
+          onClick={toggle}
           aria-label={open ? "Cerrar menú" : "Abrir menú"}
           aria-expanded={open}
-          style={{ touchAction: "manipulation", cursor: "pointer", WebkitTapHighlightColor: "transparent" } as React.CSSProperties}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "5px",
+            padding: "10px",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            touchAction: "manipulation",
+            WebkitTapHighlightColor: "transparent",
+            minWidth: "44px",
+            minHeight: "44px",
+            alignItems: "center",
+            justifyContent: "center",
+          } as React.CSSProperties}
         >
-          <span
-            className="block w-6 h-0.5 transition-all duration-300"
-            style={{
-              background: "var(--color-text)",
-              transform: open ? "rotate(45deg) translate(3px, 3px)" : "none",
-            }}
-          />
-          <span
-            className="block w-6 h-0.5 transition-all duration-300"
-            style={{
-              background: "var(--color-text)",
-              opacity: open ? 0 : 1,
-            }}
-          />
-          <span
-            className="block w-6 h-0.5 transition-all duration-300"
-            style={{
-              background: "var(--color-text)",
-              transform: open ? "rotate(-45deg) translate(3px, -3px)" : "none",
-            }}
-          />
+          <span style={{
+            display: "block", width: "24px", height: "2px",
+            background: "var(--color-text)",
+            transition: "transform 0.3s",
+            transform: open ? "rotate(45deg) translate(4px, 4px)" : "none",
+          }} />
+          <span style={{
+            display: "block", width: "24px", height: "2px",
+            background: "var(--color-text)",
+            transition: "opacity 0.3s",
+            opacity: open ? 0 : 1,
+          }} />
+          <span style={{
+            display: "block", width: "24px", height: "2px",
+            background: "var(--color-text)",
+            transition: "transform 0.3s",
+            transform: open ? "rotate(-45deg) translate(4px, -4px)" : "none",
+          }} />
         </button>
       </div>
 
       {/* Mobile drawer */}
       <div
-        className="md:hidden overflow-hidden transition-all duration-300"
+        className="md:hidden"
         style={{
-          maxHeight: open ? "240px" : "0",
-          background: "rgba(255,255,255,0.96)",
-          backdropFilter: "blur(12px)",
+          overflow: "hidden",
+          maxHeight: open ? "300px" : "0px",
+          transition: "max-height 0.3s ease",
+          background: "rgba(255,255,255,0.97)",
         }}
       >
-        <nav className="flex flex-col px-6 py-4 gap-4">
+        <nav style={{ display: "flex", flexDirection: "column", padding: "1rem 1.5rem", gap: "0.5rem" }}>
           {links.map((l) => (
             <a
               key={l.href}
               href={l.href}
               onClick={() => setOpen(false)}
-              className="text-sm font-semibold uppercase tracking-widest py-2"
               style={{
                 fontFamily: "var(--font-be-vietnam)",
-                color: "var(--color-text)",
+                fontSize: "0.875rem",
+                fontWeight: 600,
+                textTransform: "uppercase",
                 letterSpacing: "0.08em",
+                color: "var(--color-text)",
+                textDecoration: "none",
+                padding: "0.75rem 0",
+                display: "block",
+                borderBottom: "1px solid rgba(0,0,0,0.06)",
               }}
             >
               {l.label}

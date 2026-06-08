@@ -141,6 +141,7 @@ export default function HeroVideo() {
       {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
       <video
         ref={videoRef}
+        autoPlay
         muted
         playsInline
         loop
