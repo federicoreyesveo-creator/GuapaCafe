@@ -14,14 +14,29 @@ export default function HeroVideo() {
   const framesRef = useRef<ImageBitmap[]>([]);
   const [framesReady, setFramesReady] = useState(false);
 
-  // ─── Autoplay (all devices) ─────────────────────────────────────────────
+  // ─── Autoplay (all devices, Safari-proof) ──────────────────────────────
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
+
+    // Safari requires muted + playsinline as HTML attributes (not just JS props)
+    v.muted = true;
+    v.setAttribute("muted", "");
+    v.setAttribute("playsinline", "");
+
     const tryPlay = () => v.play().catch(() => {});
+
+    // Try immediately, and on every load milestone Safari might fire
     tryPlay();
-    v.addEventListener("loadeddata", tryPlay, { once: true });
-    return () => v.removeEventListener("loadeddata", tryPlay);
+    v.addEventListener("loadedmetadata", tryPlay, { once: true });
+    v.addEventListener("loadeddata",     tryPlay, { once: true });
+    v.addEventListener("canplay",        tryPlay, { once: true });
+
+    return () => {
+      v.removeEventListener("loadedmetadata", tryPlay);
+      v.removeEventListener("loadeddata",     tryPlay);
+      v.removeEventListener("canplay",        tryPlay);
+    };
   }, []);
 
   // ─── Desktop only: extract frames ───────────────────────────────────────
