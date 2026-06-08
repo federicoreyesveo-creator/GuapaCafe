@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 type Badge = "Vegetariano" | "Sin gluten";
 type Item = {
@@ -504,7 +504,16 @@ function CategoryBlock({ category }: { category: Category }) {
 
 export default function Menu() {
   const [activeTab, setActiveTab] = useState(TABS[0].id);
-  const tab = TABS.find((t) => t.id === activeTab)!;
+  const panelRef = useRef<HTMLDivElement>(null);
+  const tab = TABS.find((t) => t.id === activeTab)!
+
+  const switchTab = (id: string) => {
+    setActiveTab(id);
+    // On mobile, scroll panel into view so user sees the content change
+    setTimeout(() => {
+      panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
+  };
 
   // Split categories into two columns for desktop
   const half = Math.ceil(tab.categories.length / 2);
@@ -555,7 +564,7 @@ export default function Menu() {
               role="tab"
               aria-selected={activeTab === t.id}
               aria-controls={`panel-${t.id}`}
-              onClick={() => setActiveTab(t.id)}
+              onClick={() => switchTab(t.id)}
               className="shrink-0 px-5 py-2.5 rounded-lg font-semibold transition-all duration-200"
               style={{
                 fontFamily: "var(--font-be-vietnam)",
@@ -577,6 +586,7 @@ export default function Menu() {
 
         {/* Tab panel — 2-col grid on desktop */}
         <div
+          ref={panelRef}
           id={`panel-${tab.id}`}
           role="tabpanel"
           aria-label={tab.label}

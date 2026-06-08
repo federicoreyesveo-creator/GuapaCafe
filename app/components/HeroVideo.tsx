@@ -110,12 +110,11 @@ export default function HeroVideo() {
       <video
         ref={videoRef}
         autoPlay muted playsInline loop
+        src="/hero-video.mp4"
         preload="auto"
         className="absolute inset-0 w-full h-full object-cover"
         aria-hidden="true"
-      >
-        <source src="/hero-video.mp4" type="video/mp4" />
-      </video>
+      />
 
       {/* Canvas covers video on desktop once frames are ready */}
       <canvas
