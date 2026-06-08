@@ -7,7 +7,6 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 gsap.registerPlugin(ScrollTrigger);
 
 const FRAME_COUNT = 60;
-const IS_MOBILE = typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches;
 
 export default function HeroVideo() {
   const wrapRef   = useRef<HTMLDivElement>(null);
@@ -17,41 +16,16 @@ export default function HeroVideo() {
   const framesRef = useRef<ImageBitmap[]>([]);
   const [framesReady, setFramesReady] = useState(false);
 
-  // ─── Mobile: aggressive multi-strategy autoplay ───────────────────────────
+  // ─── Play the video — same strategy as the version that worked ─────────────
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
-
-    let played = false;
-    const tryPlay = () => {
-      if (played) return;
-      v.play().then(() => { played = true; }).catch(() => {});
-    };
-
-    // Attempt 1: immediate (works if cached / already loaded)
+    // Attempt immediately; iOS may need a slight delay for the element to attach
+    const tryPlay = () => v.play().catch(() => {});
     tryPlay();
-
-    // Attempt 2: once metadata is loaded
-    v.addEventListener("loadedmetadata", tryPlay, { once: true });
-    // Attempt 3: once we have enough data
-    v.addEventListener("canplay", tryPlay, { once: true });
-    v.addEventListener("canplaythrough", tryPlay, { once: true });
-
-    // Attempt 4: if page was backgrounded and comes back (iOS Safari)
-    const onVisible = () => { if (!document.hidden) tryPlay(); };
-    document.addEventListener("visibilitychange", onVisible);
-
-    // Attempt 5: first user interaction (absolute fallback for Low Power Mode)
-    const onTouch = () => { tryPlay(); };
-    document.addEventListener("touchstart", onTouch, { once: true, passive: true });
-
-    return () => {
-      v.removeEventListener("loadedmetadata", tryPlay);
-      v.removeEventListener("canplay", tryPlay);
-      v.removeEventListener("canplaythrough", tryPlay);
-      document.removeEventListener("visibilitychange", onVisible);
-      document.removeEventListener("touchstart", onTouch);
-    };
+    // Belt-and-suspenders: also try once data is available
+    v.addEventListener("loadeddata", tryPlay, { once: true });
+    return () => v.removeEventListener("loadeddata", tryPlay);
   }, []);
 
   // ─── Desktop only: extract frames for canvas scroll animation ─────────────
@@ -65,7 +39,6 @@ export default function HeroVideo() {
     vid.muted = true;
     vid.playsInline = true;
     vid.preload = "auto";
-    vid.crossOrigin = "anonymous";
 
     const extract = async () => {
       if (cancelled) return;
@@ -95,18 +68,13 @@ export default function HeroVideo() {
       setFramesReady(true);
     };
 
-    const onMeta = () => { if (!cancelled) extract(); };
     if (vid.readyState >= 1) {
       extract();
     } else {
-      vid.addEventListener("loadedmetadata", onMeta, { once: true });
+      vid.addEventListener("loadedmetadata", extract, { once: true });
     }
 
-    return () => {
-      cancelled = true;
-      vid.removeEventListener("loadedmetadata", onMeta);
-      vid.src = "";
-    };
+    return () => { cancelled = true; vid.src = ""; };
   }, []);
 
   // ─── Desktop only: canvas draw + GSAP pin ─────────────────────────────────
@@ -169,21 +137,17 @@ export default function HeroVideo() {
   return (
     <div ref={wrapRef} className="relative" style={{ minHeight: "100dvh" }}>
 
-      {/* Base video — always visible on mobile, hidden under canvas on desktop */}
+      {/* Video — plays as background on mobile, hidden under canvas on desktop */}
       {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
       <video
         ref={videoRef}
-        autoPlay
         muted
         playsInline
         loop
         src="/hero-video.mp4"
-        poster="/images/food-cake.png"
         preload="auto"
         className="absolute inset-0 w-full h-full object-cover"
         aria-hidden="true"
-        webkit-playsinline="true"
-        x-webkit-airplay="deny"
       />
 
       {/* Canvas replaces video on desktop once frames are extracted */}
@@ -194,16 +158,13 @@ export default function HeroVideo() {
         aria-hidden="true"
       />
 
-      {/* Dark gradient overlay */}
       <div
         className="absolute inset-0"
         style={{
-          background:
-            "linear-gradient(to bottom,rgba(0,0,0,0.45) 0%,rgba(0,0,0,0.15) 50%,rgba(0,0,0,0.55) 100%)",
+          background: "linear-gradient(to bottom,rgba(0,0,0,0.45) 0%,rgba(0,0,0,0.15) 50%,rgba(0,0,0,0.55) 100%)",
         }}
       />
 
-      {/* Hero text */}
       <div
         ref={textRef}
         className="relative z-10 flex flex-col items-center justify-center"
@@ -212,34 +173,19 @@ export default function HeroVideo() {
         <div className="text-center px-6 max-w-4xl mx-auto">
           <p
             className="text-sm font-semibold uppercase mb-6"
-            style={{
-              fontFamily: "var(--font-be-vietnam)",
-              color: "var(--color-green)",
-              letterSpacing: "0.18em",
-            }}
+            style={{ fontFamily: "var(--font-be-vietnam)", color: "var(--color-green)", letterSpacing: "0.18em" }}
           >
             Colonia del Valle · CDMX
           </p>
           <h1
             className="text-white mb-6"
-            style={{
-              fontFamily: "var(--font-literata)",
-              fontSize: "clamp(2.5rem,7vw,5.5rem)",
-              fontWeight: 600,
-              lineHeight: 1.1,
-              letterSpacing: "-0.02em",
-              textWrap: "balance",
-            }}
+            style={{ fontFamily: "var(--font-literata)", fontSize: "clamp(2.5rem,7vw,5.5rem)", fontWeight: 600, lineHeight: 1.1, letterSpacing: "-0.02em", textWrap: "balance" }}
           >
             Descubre Nuestro<br />Sabor Único.
           </h1>
           <p
             className="text-white/90 font-semibold uppercase"
-            style={{
-              fontFamily: "var(--font-be-vietnam)",
-              fontSize: "clamp(0.7rem,1.5vw,0.875rem)",
-              letterSpacing: "0.22em",
-            }}
+            style={{ fontFamily: "var(--font-be-vietnam)", fontSize: "clamp(0.7rem,1.5vw,0.875rem)", letterSpacing: "0.22em" }}
           >
             Deléitate con nuestras creaciones
           </p>
@@ -247,42 +193,21 @@ export default function HeroVideo() {
             <a
               href="#menu"
               className="inline-flex items-center justify-center px-8 py-3 rounded-lg font-semibold text-white transition-all duration-200"
-              style={{
-                fontFamily: "var(--font-be-vietnam)",
-                fontSize: "0.875rem",
-                background: "var(--color-green-deep)",
-                minHeight: "44px",
-              }}
+              style={{ fontFamily: "var(--font-be-vietnam)", fontSize: "0.875rem", background: "var(--color-green-deep)", minHeight: "44px" }}
             >
               Ver Menú
             </a>
             <a
               href="#nosotros"
               className="inline-flex items-center justify-center px-8 py-3 rounded-lg font-semibold transition-all duration-200"
-              style={{
-                fontFamily: "var(--font-be-vietnam)",
-                fontSize: "0.875rem",
-                border: "1px solid rgba(255,255,255,0.6)",
-                color: "#ffffff",
-                minHeight: "44px",
-              }}
+              style={{ fontFamily: "var(--font-be-vietnam)", fontSize: "0.875rem", border: "1px solid rgba(255,255,255,0.6)", color: "#ffffff", minHeight: "44px" }}
             >
               Nuestra Historia
             </a>
           </div>
         </div>
-        <div
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
-          aria-hidden="true"
-          style={{ opacity: 0.7 }}
-        >
-          <div
-            className="w-px h-12 mx-auto"
-            style={{
-              background:
-                "linear-gradient(to bottom,rgba(255,255,255,0.8),transparent)",
-            }}
-          />
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2" aria-hidden="true" style={{ opacity: 0.7 }}>
+          <div className="w-px h-12 mx-auto" style={{ background: "linear-gradient(to bottom,rgba(255,255,255,0.8),transparent)" }} />
         </div>
       </div>
     </div>

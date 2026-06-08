@@ -575,10 +575,10 @@ export default function Menu() {
                 minHeight: "44px",
                 background: activeTab === t.id ? "var(--color-green)" : "transparent",
                 color: activeTab === t.id ? "#ffffff" : "var(--color-text-muted)",
-                border:
-                  activeTab === t.id
-                    ? "1px solid var(--color-green)"
-                    : "1px solid var(--color-outline)",
+                border: activeTab === t.id ? "1px solid var(--color-green)" : "1px solid var(--color-outline)",
+                touchAction: "manipulation",
+                cursor: "pointer",
+                WebkitTapHighlightColor: "transparent",
               }}
             >
               {t.label}

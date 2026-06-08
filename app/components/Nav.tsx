@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 
 const links = [
   { label: "Nosotros", href: "#nosotros" },
@@ -65,6 +65,7 @@ export default function Nav() {
           onClick={() => setOpen(!open)}
           aria-label={open ? "Cerrar menú" : "Abrir menú"}
           aria-expanded={open}
+          style={{ touchAction: "manipulation", cursor: "pointer", WebkitTapHighlightColor: "transparent" } as React.CSSProperties}
         >
           <span
             className="block w-6 h-0.5 transition-all duration-300"
