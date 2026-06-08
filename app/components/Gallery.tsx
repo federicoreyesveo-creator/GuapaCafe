@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { useScrollReveal } from "../hooks/useScrollReveal";
 
 const photos = [
   {
@@ -30,7 +29,6 @@ const photos = [
 export default function Gallery() {
   const [hovered, setHovered] = useState<number | null>(null);
   const [lightbox, setLightbox] = useState<number | null>(null);
-  const header = useScrollReveal(0);
 
   useEffect(() => {
     if (lightbox === null) return;
@@ -50,15 +48,11 @@ export default function Gallery() {
   return (
     <section
       id="galeria"
-      className="py-24 md:py-32"
+      className="py-16 md:py-28"
       style={{ background: "var(--color-bg)" }}
     >
       <div className="max-w-7xl mx-auto px-6 md:px-10">
-        <div
-          ref={header.ref as React.RefObject<HTMLDivElement>}
-          style={header.style}
-          className="text-center mb-12"
-        >
+        <div className="text-center mb-12">
           <h2
             style={{
               fontFamily: "var(--font-literata)",

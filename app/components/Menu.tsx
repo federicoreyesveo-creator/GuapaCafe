@@ -514,7 +514,7 @@ export default function Menu() {
   return (
     <section
       id="menu"
-      className="py-24 md:py-32"
+      className="py-16 md:py-28"
       style={{ background: "var(--color-surface)" }}
     >
       <div className="max-w-7xl mx-auto px-6 md:px-10">
@@ -545,10 +545,9 @@ export default function Menu() {
 
         {/* Tabs */}
         <div
-          className="flex gap-1 mb-10 overflow-x-auto pb-1"
+          className="flex flex-wrap gap-2 mb-10"
           role="tablist"
           aria-label="Secciones del menú"
-          style={{ scrollbarWidth: "none" }}
         >
           {TABS.map((t) => (
             <button

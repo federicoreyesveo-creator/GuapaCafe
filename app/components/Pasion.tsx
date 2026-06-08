@@ -4,7 +4,7 @@ import Image from "next/image";
 
 export default function Pasion() {
   return (
-    <section id="nosotros" className="py-24 md:py-32" style={{ background: "var(--color-bg)" }}>
+    <section id="nosotros" className="py-16 md:py-28" style={{ background: "var(--color-bg)" }}>
       <div className="max-w-7xl mx-auto px-6 md:px-10">
         <div className="grid md:grid-cols-2 gap-12 md:gap-20 items-center">
 
@@ -33,7 +33,7 @@ export default function Pasion() {
             </div>
           </div>
 
-          <div className="relative rounded-2xl overflow-hidden" style={{ aspectRatio: "4/5" }}>
+          <div className="relative rounded-2xl overflow-hidden" style={{ aspectRatio: "3/2", maxHeight: "420px" }}>
             <Image
               src="/images/food-pastries.png"
               alt="Croissants artesanales de Guapa Café"
