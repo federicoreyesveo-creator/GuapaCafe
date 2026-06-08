@@ -1,37 +1,23 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-
-// ─── NO top-level GSAP import — loaded dynamically only on desktop ──────────
-
-const FRAME_COUNT = 60;
+import { useEffect, useRef } from "react";
 
 export default function HeroVideo() {
-  const wrapRef   = useRef<HTMLDivElement>(null);
-  const videoRef  = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const textRef   = useRef<HTMLDivElement>(null);
-  const framesRef = useRef<ImageBitmap[]>([]);
-  const [framesReady, setFramesReady] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const textRef  = useRef<HTMLDivElement>(null);
 
-  // ─── Autoplay (all devices, Safari-proof) ──────────────────────────────
+  // Safari requires muted + playsinline as HTML attributes (not just JS props)
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
-
-    // Safari requires muted + playsinline as HTML attributes (not just JS props)
     v.muted = true;
     v.setAttribute("muted", "");
     v.setAttribute("playsinline", "");
-
     const tryPlay = () => v.play().catch(() => {});
-
-    // Try immediately, and on every load milestone Safari might fire
     tryPlay();
     v.addEventListener("loadedmetadata", tryPlay, { once: true });
     v.addEventListener("loadeddata",     tryPlay, { once: true });
     v.addEventListener("canplay",        tryPlay, { once: true });
-
     return () => {
       v.removeEventListener("loadedmetadata", tryPlay);
       v.removeEventListener("loadeddata",     tryPlay);
@@ -39,124 +25,9 @@ export default function HeroVideo() {
     };
   }, []);
 
-  // ─── Desktop only: extract frames ───────────────────────────────────────
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (window.matchMedia("(max-width: 767px)").matches) return;
-
-    let cancelled = false;
-    const vid = document.createElement("video");
-    vid.src = "/hero-video.mp4";
-    vid.muted = true;
-    vid.playsInline = true;
-    vid.preload = "auto";
-
-    const extract = async () => {
-      if (cancelled) return;
-      const dur = vid.duration;
-      if (!dur || isNaN(dur)) return;
-      const maxW = 1280;
-      const scale = Math.min(1, maxW / (vid.videoWidth || 1920));
-      const w = Math.round((vid.videoWidth  || 1920) * scale);
-      const h = Math.round((vid.videoHeight || 1080) * scale);
-      const frames: ImageBitmap[] = [];
-
-      for (let i = 0; i < FRAME_COUNT; i++) {
-        if (cancelled) return;
-        vid.currentTime = (i / (FRAME_COUNT - 1)) * dur;
-        await new Promise<void>((res) =>
-          vid.addEventListener("seeked", () => res(), { once: true })
-        );
-        if (cancelled) return;
-        try {
-          frames.push(await createImageBitmap(vid, { resizeWidth: w, resizeHeight: h }));
-        } catch {
-          return;
-        }
-      }
-      if (cancelled) return;
-      framesRef.current = frames;
-      setFramesReady(true);
-    };
-
-    if (vid.readyState >= 1) {
-      extract();
-    } else {
-      vid.addEventListener("loadedmetadata", extract, { once: true });
-    }
-    return () => { cancelled = true; vid.src = ""; };
-  }, []);
-
-  // ─── Desktop only: canvas + GSAP pin (dynamic import) ───────────────────
-  useEffect(() => {
-    if (!framesReady) return;
-    if (typeof window === "undefined") return;
-    if (window.matchMedia("(max-width: 767px)").matches) return;
-
-    const canvas = canvasRef.current;
-    const wrap   = wrapRef.current;
-    if (!canvas || !wrap || !framesRef.current.length) return;
-
-    const frames = framesRef.current;
-    let idx = 0;
-
-    const draw = (i: number) => {
-      idx = i;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-      const f = frames[Math.min(i, frames.length - 1)];
-      const sc = Math.max(canvas.width / f.width, canvas.height / f.height);
-      ctx.drawImage(
-        f,
-        (canvas.width  - f.width  * sc) / 2,
-        (canvas.height - f.height * sc) / 2,
-        f.width * sc, f.height * sc
-      );
-    };
-
-    const resize = () => {
-      canvas.width  = window.innerWidth;
-      canvas.height = window.innerHeight;
-      draw(idx);
-    };
-    resize();
-    window.addEventListener("resize", resize);
-
-    let cleanup = () => {};
-
-    // Dynamic import — GSAP never loads on mobile
-    Promise.all([
-      import("gsap"),
-      import("gsap/ScrollTrigger"),
-    ]).then(([{ default: gsap }, { ScrollTrigger }]) => {
-      gsap.registerPlugin(ScrollTrigger);
-      const ctx = gsap.context(() => {
-        ScrollTrigger.create({
-          trigger: wrap,
-          start: "top top",
-          end: `+=${window.innerHeight * 6}`,
-          pin: true,
-          anticipatePin: 1,
-          onUpdate: (self) => {
-            draw(Math.floor(self.progress * (FRAME_COUNT - 1)));
-            if (textRef.current)
-              textRef.current.style.opacity = String(Math.max(0, 1 - self.progress * 4));
-          },
-        });
-      }, wrap);
-      cleanup = () => ctx.revert();
-    });
-
-    return () => {
-      cleanup();
-      window.removeEventListener("resize", resize);
-    };
-  }, [framesReady]);
-
   return (
-    <div ref={wrapRef} className="relative" style={{ minHeight: "100svh" }}>
+    <div className="relative" style={{ minHeight: "100svh" }}>
 
-      {/* Video — plays on mobile, hidden under canvas on desktop */}
       {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
       <video
         ref={videoRef}
@@ -170,15 +41,7 @@ export default function HeroVideo() {
         aria-hidden="true"
       />
 
-      {/* Canvas replaces video on desktop once frames are extracted */}
-      <canvas
-        ref={canvasRef}
-        className="absolute inset-0 hidden md:block"
-        style={{ width: "100%", height: "100%" }}
-        aria-hidden="true"
-      />
-
-      {/* Gradient overlay — pointer-events:none so it never blocks taps */}
+      {/* Gradient overlay */}
       <div
         className="absolute inset-0"
         style={{
@@ -187,40 +50,50 @@ export default function HeroVideo() {
         }}
       />
 
+      {/* Hero text */}
       <div
         ref={textRef}
         className="relative z-10 flex flex-col items-center justify-center"
-        style={{ minHeight: "100svh", paddingTop: "64px", pointerEvents: "none" }}
+        style={{ minHeight: "100svh", paddingTop: "64px" }}
       >
-        <div className="text-center px-6 max-w-4xl mx-auto" style={{ pointerEvents: "auto" }}>
-          <p className="text-sm font-semibold uppercase mb-6"
-            style={{ fontFamily: "var(--font-be-vietnam)", color: "var(--color-green)", letterSpacing: "0.18em" }}>
+        <div className="text-center px-6 max-w-4xl mx-auto">
+          <p
+            className="text-sm font-semibold uppercase mb-6"
+            style={{ fontFamily: "var(--font-be-vietnam)", color: "var(--color-green)", letterSpacing: "0.18em" }}
+          >
             Colonia del Valle · CDMX
           </p>
-          <h1 className="text-white mb-6"
-            style={{ fontFamily: "var(--font-literata)", fontSize: "clamp(2.5rem,7vw,5.5rem)", fontWeight: 600, lineHeight: 1.1, letterSpacing: "-0.02em", textWrap: "balance" }}>
+          <h1
+            className="text-white mb-6"
+            style={{ fontFamily: "var(--font-literata)", fontSize: "clamp(2.5rem,7vw,5.5rem)", fontWeight: 600, lineHeight: 1.1, letterSpacing: "-0.02em", textWrap: "balance" }}
+          >
             Descubre Nuestro<br />Sabor Único.
           </h1>
-          <p className="text-white/90 font-semibold uppercase"
-            style={{ fontFamily: "var(--font-be-vietnam)", fontSize: "clamp(0.7rem,1.5vw,0.875rem)", letterSpacing: "0.22em" }}>
+          <p
+            className="text-white/90 font-semibold uppercase"
+            style={{ fontFamily: "var(--font-be-vietnam)", fontSize: "clamp(0.7rem,1.5vw,0.875rem)", letterSpacing: "0.22em" }}
+          >
             Deléitate con nuestras creaciones
           </p>
           <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="#menu"
+            <a
+              href="#menu"
               className="inline-flex items-center justify-center px-8 py-3 rounded-lg font-semibold text-white transition-all duration-200"
-              style={{ fontFamily: "var(--font-be-vietnam)", fontSize: "0.875rem", background: "var(--color-green-deep)", minHeight: "44px" }}>
+              style={{ fontFamily: "var(--font-be-vietnam)", fontSize: "0.875rem", background: "var(--color-green-deep)", minHeight: "44px" }}
+            >
               Ver Menú
             </a>
-            <a href="#nosotros"
+            <a
+              href="#nosotros"
               className="inline-flex items-center justify-center px-8 py-3 rounded-lg font-semibold transition-all duration-200"
-              style={{ fontFamily: "var(--font-be-vietnam)", fontSize: "0.875rem", border: "1px solid rgba(255,255,255,0.6)", color: "#ffffff", minHeight: "44px" }}>
+              style={{ fontFamily: "var(--font-be-vietnam)", fontSize: "0.875rem", border: "1px solid rgba(255,255,255,0.6)", color: "#ffffff", minHeight: "44px" }}
+            >
               Nuestra Historia
             </a>
           </div>
         </div>
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2" aria-hidden="true" style={{ opacity: 0.7 }}>
-          <div className="w-px h-12 mx-auto"
-            style={{ background: "linear-gradient(to bottom,rgba(255,255,255,0.8),transparent)" }} />
+          <div className="w-px h-12 mx-auto" style={{ background: "linear-gradient(to bottom,rgba(255,255,255,0.8),transparent)" }} />
         </div>
       </div>
     </div>
