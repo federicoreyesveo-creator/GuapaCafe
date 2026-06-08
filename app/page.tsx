@@ -4,8 +4,6 @@ import Pasion from "./components/Pasion";
 import Gallery from "./components/Gallery";
 import Menu from "./components/Menu";
 import Footer from "./components/Footer";
-import HydrationTest from "./components/HydrationTest";
-
 export default function Home() {
   return (
     <>
@@ -17,7 +15,6 @@ export default function Home() {
         <Menu />
       </main>
       <Footer />
-      <HydrationTest />
     </>
   );
 }
