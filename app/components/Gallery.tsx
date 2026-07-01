@@ -77,16 +77,15 @@ export default function Gallery() {
         </div>
 
         <div
-          className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4"
-          style={{ gridAutoRows: "280px" }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4"
+          style={{ gridAutoRows: "auto" }}
         >
           {photos.map((photo, i) => (
             <div
               key={photo.src}
-              className="relative overflow-hidden rounded-xl"
+              className="relative overflow-hidden rounded-2xl cursor-pointer"
               style={{
-                gridRow: i === 0 ? "span 2" : "span 1",
-                cursor: "pointer",
+                aspectRatio: "1 / 1",
                 transform: hovered === i ? "scale(1.02)" : "scale(1)",
                 transition: "transform 0.4s cubic-bezier(0.16,1,0.3,1)",
               }}

@@ -567,7 +567,7 @@ export default function Menu() {
               aria-selected={activeTab === t.id}
               aria-controls={`panel-${t.id}`}
               onClick={() => setActiveTab(t.id)}
-              className="shrink-0 px-5 py-2.5 rounded-lg font-semibold transition-all duration-200"
+              className="shrink-0 md:flex-1 px-5 py-2.5 rounded-lg font-semibold transition-all duration-200 text-center"
               style={{
                 fontFamily: "var(--font-be-vietnam)",
                 fontSize: "0.8125rem",

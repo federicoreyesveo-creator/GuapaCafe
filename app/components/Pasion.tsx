@@ -35,8 +35,8 @@ export default function Pasion() {
 
           <div className="relative rounded-2xl overflow-hidden" style={{ aspectRatio: "3/2", maxHeight: "420px" }}>
             <Image
-              src="/images/food-pastries.png"
-              alt="Croissants artesanales de Guapa Café"
+              src="/images/food-carrot-cake.png"
+              alt="Carrot cake de Guapa Café"
               fill
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 50vw"
