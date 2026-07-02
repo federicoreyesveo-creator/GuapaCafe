@@ -77,7 +77,7 @@ export default function Gallery() {
         </div>
 
         <div
-          className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr] md:grid-rows-[270px_270px] gap-3 md:gap-4"
+          className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr] md:grid-rows-[260px_260px] gap-3 md:gap-6"
         >
           {photos.map((photo, i) => (
             <div
