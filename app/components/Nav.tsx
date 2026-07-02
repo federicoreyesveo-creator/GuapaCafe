@@ -84,13 +84,11 @@ export default function Nav() {
 
         {/* Hamburger — mobile only */}
         <button
-          className="md:hidden"
+          className="flex flex-col md:!hidden"
           onClick={toggle}
           aria-label={open ? "Cerrar menú" : "Abrir menú"}
           aria-expanded={open}
           style={{
-            display: "flex",
-            flexDirection: "column",
             gap: "5px",
             padding: "10px",
             background: "none",
