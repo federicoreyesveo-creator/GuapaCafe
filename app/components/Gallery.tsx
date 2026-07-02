@@ -77,15 +77,13 @@ export default function Gallery() {
         </div>
 
         <div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4"
-          style={{ gridAutoRows: "auto" }}
+          className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr] md:grid-rows-[270px_270px] gap-3 md:gap-4"
         >
           {photos.map((photo, i) => (
             <div
               key={photo.src}
-              className="relative overflow-hidden rounded-2xl cursor-pointer"
+              className={`relative overflow-hidden rounded-2xl cursor-pointer aspect-square md:aspect-auto${i === 0 ? " md:row-span-2" : ""}`}
               style={{
-                aspectRatio: "1 / 1",
                 transform: hovered === i ? "scale(1.02)" : "scale(1)",
                 transition: "transform 0.4s cubic-bezier(0.16,1,0.3,1)",
               }}
@@ -102,7 +100,7 @@ export default function Gallery() {
                 alt={photo.alt}
                 fill
                 className="object-cover"
-                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 400px"
+                sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 600px"
               />
               <div
                 className="absolute inset-0 transition-opacity duration-300"
