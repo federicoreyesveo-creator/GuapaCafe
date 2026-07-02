@@ -77,12 +77,12 @@ export default function Gallery() {
         </div>
 
         <div
-          className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr] md:grid-rows-[260px_260px] gap-3 md:gap-6"
+          className="grid gallery-grid"
         >
           {photos.map((photo, i) => (
             <div
               key={photo.src}
-              className={`relative overflow-hidden rounded-2xl cursor-pointer aspect-square md:aspect-auto${i === 0 ? " md:row-span-2" : ""}`}
+              className={`relative overflow-hidden rounded-2xl cursor-pointer ${i === 0 ? "gallery-item-hero" : "gallery-item aspect-square"}`}
               style={{
                 transform: hovered === i ? "scale(1.02)" : "scale(1)",
                 transition: "transform 0.4s cubic-bezier(0.16,1,0.3,1)",
